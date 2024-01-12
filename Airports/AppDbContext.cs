@@ -1,7 +1,7 @@
-﻿using Airports.Entities;
+﻿using AirportsAndFlights.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Airports
+namespace AirportsAndFlights
 {
     internal class AppDbContext : DbContext
     {

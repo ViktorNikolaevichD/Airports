@@ -1,4 +1,4 @@
-﻿namespace Airports.Entities
+﻿namespace AirportsAndFlights.Entities
 {
     public class Airport // Таблица аэропортов
     {

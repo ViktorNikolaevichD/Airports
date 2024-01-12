@@ -1,4 +1,4 @@
-﻿namespace Airports
+﻿namespace AirportsAndFlights
 {
     public class Program
     {

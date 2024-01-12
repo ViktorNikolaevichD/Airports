@@ -1,6 +1,22 @@
-﻿namespace Airports
+﻿using AirportsAndFlights.Entities;
+
+namespace Airports
 {
     public class Commands
     {
+        // Генерация аэропортов
+        public static void GenerateAirports(int count)
+        {
+            using (var db = new AppDbContext())
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    db.Add(new Airport
+                    {
+
+                    })
+                }
+            }
+        }
     }
 }

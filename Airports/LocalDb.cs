@@ -1,6 +1,6 @@
-﻿using Airports.Entities;
+﻿using AirportsAndFlights.Entities;
     
-namespace Airports
+namespace AirportsAndFlights
 {
     
     public class LocalDb // Локальная база данных
