@@ -13,7 +13,17 @@ namespace AirportsAndFlights
             // Проверка базы данных на существование
             Database.EnsureCreated();
         }
-
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Flight>()
+                .HasOne(p => p.DepartureAirport)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Flight>()
+                .HasOne(p => p.ArrivalAirport)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Restrict);
+        }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             // Строка подключения к базе данных
