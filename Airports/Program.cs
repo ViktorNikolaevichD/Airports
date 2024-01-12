@@ -36,7 +36,8 @@ namespace AirportsAndFlights
                     if (comm.Rank == 0)
                     {
                         Console.Write("Введите команду \ngenAirport - сгенерировать аэропорты;" +
-                                                      "\ngenFlight - сгенерировать рейсы; " +
+                                                      "\ngenFlight - сгенерировать рейсы;" +
+                                                      "\nupdateFlight - обновить статусы рейсова;" +
 
                                                       "\nquit - выйти из программы: ");
                         command = Console.ReadLine();
@@ -121,6 +122,25 @@ namespace AirportsAndFlights
                             {
                                 stopWatch.Stop();
                                 Console.WriteLine("Аэропорты сгенерированы");
+                            }
+                            break;
+                        case "updateFlight":
+                            if (comm.Rank == 0)
+                            {
+                                Console.Write("Обновляем статусы рейсов");
+                                stopWatch.Restart();
+                            }
+
+                            // Обновление статусов рейсов
+                            Commands.UpdateFlightStatus(localDb);
+
+                            // Все процессы ждут окончания обновления
+                            comm.Barrier();
+
+                            if (comm.Rank == 0)
+                            {
+                                stopWatch.Stop();
+                                Console.WriteLine("Статусы обновлены");
                             }
                             break;
                         default:

@@ -12,13 +12,10 @@ namespace AirportsAndFlights
             using (var db = new AppDbContext())
             {
                 // Количество строк в каждой таблице
-                //int countAirport = db.Airports.Count();
                 int countFlight = db.Flights.Count();
                 // Размер части для каждой таблицы
-                //int partAirpot = (countAirport / size + 1);
                 int partFlight = (countFlight / size + 1);
                 // Смещение по каждой таблице
-                //int offsetAirport = rank * partAirpot;
                 int offsetFlight = rank * partFlight;
 
                 // Вернуть локальную базу данных
@@ -142,6 +139,41 @@ namespace AirportsAndFlights
             }
         }
         
-        // 
+        // Обновить данные в БД на сервере
+        private static void UpdateServerDb(LocalDb localDb)
+        {
+            using (var db = new AppDbContext())
+            {
+                // Обновить данные в таблицах
+                db.Airports.UpdateRange(localDb.Airports);
+                db.Flights.UpdateRange(localDb.Flights);
+
+                db.SaveChanges();
+            }
+        }
+
+        // Обновить статусы вылетов
+        public static void UpdateFlightStatus(LocalDb localDb)
+        {
+            // Обновить статусы рейсов, которые выполняются или у них запланирован статус
+            foreach (var flight in localDb.Flights.Where(u => u.Status == "Запланирован" || u.Status == "Выполняется"))
+            {
+                // Аэропорт вылета
+                int departureAirport = flight.DepartureAirportId;
+                // Аэропорт прилета
+                int arrivalAirport = flight.ArrivalAirportId;
+
+                // Время вылета
+                DateTime departureTime = flight.DepartureTime;
+                // Время прилета
+                DateTime arriavalime = flight.ArrivalTime;
+
+                // Обновить статус
+                flight.Status = CheckFlightStatus(departureTime, arriavalime, departureAirport, arrivalAirport);
+            }
+
+            // Обновить данные на сервере
+            UpdateServerDb(localDb);
+        }
     }
 }
