@@ -1,6 +1,6 @@
 ﻿using AirportsAndFlights.Entities;
 
-namespace Airports
+namespace AirportsAndFlights
 {
     public class Commands
     {
