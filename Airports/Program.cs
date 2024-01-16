@@ -41,6 +41,7 @@ namespace AirportsAndFlights
                                                       "\ngenFlight - сгенерировать рейсы;" +
                                                       "\nupdateFlight - обновить статусы рейсова;" +
                                                       "\nvievFlight - посмотреть предстоящие вылеты;" +
+                                                      "\nvievAirport - посмотреть список аэропортов;" +
                                                       "\nquit - выйти из программы: ");
                         command = Console.ReadLine();
                     }
@@ -79,6 +80,12 @@ namespace AirportsAndFlights
                             // Все процессы ждут окончания генерации
                             comm.Barrier();
 
+                            // Обновление статусов рейсов
+                            Commands.UpdateFlightStatus(localDb);
+
+                            // Все процессы ждут окончания обновления
+                            comm.Barrier();
+
                             // Обновление локальной базы данных
                             localDb = Commands.LoadingDb(comm.Rank, comm.Size);
 
@@ -95,7 +102,7 @@ namespace AirportsAndFlights
                             countForRank = 0;
                             if (comm.Rank == 0)
                             {
-                                Console.Write("Сколько аэропортов сгенерировать: ");
+                                Console.Write("Сколько рейсов сгенерировать: ");
                                 count = Convert.ToInt32(Console.ReadLine());
                                 stopWatch.Restart();
                                 countForRank = count / comm.Size;
@@ -117,13 +124,19 @@ namespace AirportsAndFlights
                             // Все процессы ждут окончания генерации
                             comm.Barrier();
 
+                            // Обновление статусов рейсов
+                            Commands.UpdateFlightStatus(localDb);
+
+                            // Все процессы ждут окончания обновления
+                            comm.Barrier();
+
                             // Обновление локальной базы данных
                             localDb = Commands.LoadingDb(comm.Rank, comm.Size);
 
                             if (comm.Rank == 0)
                             {
                                 stopWatch.Stop();
-                                Console.WriteLine("Аэропорты сгенерированы");
+                                Console.WriteLine("Рейсы сгенерированы");
                             }
                             break;
                         case "updateFlight":
@@ -199,11 +212,11 @@ namespace AirportsAndFlights
                                 foreach (Flight flight in flightList)
                                 {
                                     Console.WriteLine(string.Format(
-                                        "\nId {0:5} | " +
-                                        "DepartureAirportId {1:5} {2:30} | " +
-                                        "ArrivalAirportId {3:5} {4:30} | " +
-                                        "DeparureTime {5} | " +
-                                        "ArrivalTime {6} | " +
+                                        "\n\nId {0,6} | " +
+                                        "DepartureAirportId {1,6} {2,-20} | " +
+                                        "ArrivalAirportId {3,6} {4,-20}  " +
+                                        "\nDepTime {5, -19} | " +
+                                        "ArrTime {6, -19} | " +
                                         "Status {7}",
                                         flight.Id,
                                         flight.DepartureAirportId,
@@ -223,6 +236,35 @@ namespace AirportsAndFlights
                                                                     departureAirportId,
                                                                     arrivalAirportId,
                                                                     daysAhead)), 0);
+                            }
+                            break;
+                        case "vievAirport":
+                            if (comm.Rank == 0)
+                            {
+                                Console.WriteLine("Выводим список аэропортов");
+                                stopWatch.Restart();
+
+                                if (localDb.Airports.Count() < 0)
+                                {
+                                    Console.WriteLine("Список аэропортов пуст");
+                                    stopWatch.Stop();
+                                    break;
+                                }
+
+                                foreach (Airport airport in localDb.Airports)
+                                {
+                                    Console.WriteLine(string.Format(
+                                        "Id: {0,6} | " +
+                                        "Name: {1,-20} | " +
+                                        "City: {2,-20} | " +
+                                        "Status: {3,-15}",
+                                        airport.Id,
+                                        airport.Name,
+                                        airport.City,
+                                        airport.Status));
+                                }
+
+                                stopWatch.Stop();
                             }
                             break;
                         default:
