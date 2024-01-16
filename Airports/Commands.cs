@@ -54,10 +54,26 @@ namespace AirportsAndFlights
         }
 
         // Функция для определения статуса рейса
-        public static string CheckFlightStatus(DateTime depTime, DateTime arrivTime, int depAirportId, int arrivAirportId)
+        public static string CheckFlightStatus(
+                                                DateTime depTime, 
+                                                DateTime arrivTime, 
+                                                int depAirportId,
+                                                int arrivAirportId, 
+                                                string depAirportStatus,
+                                                string arrivAirportStatus,
+                                                string flightStatus = "Неопределен")
         {
             string status = "Неопределен";
-
+            if (flightStatus == "Отменен")
+            {
+                status = "Отменен";
+                return status;
+            }
+            if (depAirportStatus == "Закрыт" || arrivAirportStatus == "Закрыт")
+            {
+                status = "Отменен";
+                return status;
+            }
             if (depTime == arrivTime)
             {
                 status = "Отменен";
@@ -104,7 +120,8 @@ namespace AirportsAndFlights
                     // Удалить аэропорт, чтобы он не попался на аэропорт прилета
                     airports.Remove(departuerAirport);
                     // Аэропорт прилета
-                    int arrivalAirportId = airports[Faker.RandomNumber.Next(0, airports.Count() - 1)].Id;
+                    Airport arrivalAirport = airports[Faker.RandomNumber.Next(0, airports.Count() - 1)];
+                    int arrivalAirportId = arrivalAirport.Id;
                     // Вернуть обратно в список аэропорт вылета
                     airports.Add(departuerAirport);
 
@@ -128,7 +145,13 @@ namespace AirportsAndFlights
                     }
 
                     // Статус рейса
-                    string status = CheckFlightStatus(departureTime, arrivalTime, departuerAirportId, arrivalAirportId);
+                    string status = CheckFlightStatus(
+                        departureTime, 
+                        arrivalTime, 
+                        departuerAirportId, 
+                        arrivalAirportId, 
+                        departuerAirport.Status, 
+                        arrivalAirport.Status);
                         
                     db.Flights.Add(new Flight
                     {
@@ -165,9 +188,9 @@ namespace AirportsAndFlights
             foreach (var flight in localDb.Flights.Where(u => u.Status == "Запланирован" || u.Status == "Выполняется"))
             {
                 // Аэропорт вылета
-                int departureAirport = flight.DepartureAirportId;
+                Airport departureAirport = flight.DepartureAirport;
                 // Аэропорт прилета
-                int arrivalAirport = flight.ArrivalAirportId;
+                Airport arrivalAirport = flight.ArrivalAirport;
 
                 // Время вылета
                 DateTime departureTime = flight.DepartureTime;
@@ -175,7 +198,14 @@ namespace AirportsAndFlights
                 DateTime arriavalime = flight.ArrivalTime;
 
                 // Обновить статус
-                flight.Status = CheckFlightStatus(departureTime, arriavalime, departureAirport, arrivalAirport);
+                flight.Status = CheckFlightStatus(
+                    departureTime, 
+                    arriavalime, 
+                    departureAirport.Id, 
+                    arrivalAirport.Id, 
+                    departureAirport.Status, 
+                    arrivalAirport.Status, 
+                    flight.Status);
             }
 
             // Обновить данные на сервере

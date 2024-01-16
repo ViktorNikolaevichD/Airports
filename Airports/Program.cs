@@ -40,8 +40,9 @@ namespace AirportsAndFlights
                         Console.Write("Введите команду \ngenAirport - сгенерировать аэропорты;" +
                                                       "\ngenFlight - сгенерировать рейсы;" +
                                                       "\nupdateFlight - обновить статусы рейсова;" +
-                                                      "\nvievFlight - посмотреть предстоящие вылеты;" +
-                                                      "\nvievAirport - посмотреть список аэропортов;" +
+                                                      "\nviewFlight - посмотреть предстоящие вылеты;" +
+                                                      "\nviewAirport - посмотреть список аэропортов;" +
+                                                      "\nmanageAirport - открыть/закрыть аэропорт;" +
                                                       "\nquit - выйти из программы: ");
                         command = Console.ReadLine();
                     }
@@ -158,7 +159,7 @@ namespace AirportsAndFlights
                                 Console.WriteLine("Статусы обновлены");
                             }
                             break;
-                        case "vievFlight":
+                        case "viewFlight":
                             // Id аэропорта вылета
                             int departureAirportId = 0;
                             // Id аэропорта прилета
@@ -238,7 +239,7 @@ namespace AirportsAndFlights
                                                                     daysAhead)), 0);
                             }
                             break;
-                        case "vievAirport":
+                        case "viewAirport":
                             if (comm.Rank == 0)
                             {
                                 Console.WriteLine("Выводим список аэропортов");
@@ -251,21 +252,117 @@ namespace AirportsAndFlights
                                     break;
                                 }
 
-                                foreach (Airport airport in localDb.Airports)
+                                foreach (Airport airp in localDb.Airports)
                                 {
                                     Console.WriteLine(string.Format(
                                         "Id: {0,6} | " +
                                         "Name: {1,-20} | " +
                                         "City: {2,-20} | " +
                                         "Status: {3,-15}",
-                                        airport.Id,
-                                        airport.Name,
-                                        airport.City,
-                                        airport.Status));
+                                        airp.Id,
+                                        airp.Name,
+                                        airp.City,
+                                        airp.Status));
                                 }
 
                                 stopWatch.Stop();
                             }
+                            break;
+                        case "manageAirport":
+                            // Айди аэропорта
+                            int airportId = 0;
+                            // Статус аэропорта
+                            string airportStatus = "q";
+                            // Найденый аэропорт
+                            Airport? airportFind = null;
+                            if (comm.Rank == 0)
+                            {
+                                Console.Write("Введите Id аэроопорта: ");
+                                airportId = Convert.ToInt32(Console.ReadLine());
+
+                                airportFind = localDb.Airports.Where(p => p.Id == airportId).FirstOrDefault();
+                                if (airportFind == null)
+                                {
+                                    Console.WriteLine("Такого аэропорта нет");
+                                    airportStatus = "q";
+                                }
+                                else 
+                                {
+                                    Console.WriteLine($"Аэропорт {airportFind.Name} | Город {airportFind.City} | Статус {airportFind.Status}");
+
+                                    if (airportFind.Status == "Открыт")
+                                    {
+                                        Console.Write("Если вы хотите закрыть аэропорт, то напишите 'close', для выхода напишите 'q': ");
+                                    }
+                                    else
+                                    {
+                                        Console.Write("Если вы хотите открыть аэропорт, то напишите 'open', для выхода напишите 'q': ");
+                                    }
+
+                                    airportStatus = Console.ReadLine();
+                                    stopWatch.Restart();
+
+                                    if (airportStatus == "open" && airportFind.Status == "Открыт")
+                                    {
+                                        Console.WriteLine("Аэропорт уже открыт");
+                                        airportStatus = "q";
+                                    }
+                                    else if (airportStatus == "close" && airportFind.Status == "Закрыт")
+                                    {
+                                        Console.WriteLine("Аэропорт уже закрыт");
+                                        airportStatus = "q";
+                                    }
+                                }
+                                
+                            }
+                            // Разослать всем процессам новый статус
+                            comm.Broadcast(ref airportStatus!, 0);
+
+                            // Выйти
+                            if (airportStatus == "q")
+                            {
+                                if (comm.Rank == 0)
+                                    stopWatch.Stop();
+                                break;
+                            }
+
+                            // Разослать всем процессам айди аэропорта
+                            comm.Broadcast(ref airportId, 0);
+
+                            if (airportStatus == "open")
+                            {
+                                // Установить аэропорту статус "Открыт"
+                                localDb.Airports
+                                    .Where(p => p.Id == airportId)
+                                    .First()
+                                    .Status = "Открыт";
+                                if (comm.Rank == 0)
+                                    Console.WriteLine("Аэропорт открыт");
+                            }
+
+                            if (airportStatus == "close")
+                            {
+                                // Установить аэропорту статус "Закрыт"
+                                localDb.Airports
+                                    .Where(p => p.Id == airportId)
+                                    .First()
+                                    .Status = "Закрыт";
+                                if (comm.Rank == 0)
+                                    Console.WriteLine("Аэропорт закрыт");
+                            }
+
+                            // Обновление статусов рейсов
+                            Commands.UpdateFlightStatus(localDb);
+
+                            // Все процессы ждут окончания обновления
+                            comm.Barrier();
+
+                            // Обновление локальной базы данных
+                            localDb = Commands.LoadingDb(comm.Rank, comm.Size);
+
+                            if (comm.Rank == 0)
+                                stopWatch.Stop();
+
                             break;
                         default:
                             if (comm.Rank == 0 && command != "quit")
