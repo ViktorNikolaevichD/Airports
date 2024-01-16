@@ -95,13 +95,19 @@ namespace AirportsAndFlights
             using (var db = new AppDbContext())
             {
                 // Список аэропортов
-                List<Airport> airports = db.Airports.Where(u => u.Status == "Открыт").ToList();
+                List<Airport> airports = db.Airports.Where(u => u.Status == "Открыт").AsNoTracking().ToList();
                 for (int i = 0; i < count;i++)
                 {
                     // Аэропорт вылета
-                    int departuerAirportId = airports[Faker.RandomNumber.Next(0, airports.Count() - 1)].Id;
+                    Airport departuerAirport = airports[Faker.RandomNumber.Next(0, airports.Count() - 1)];
+                    int departuerAirportId = departuerAirport.Id;
+                    // Удалить аэропорт, чтобы он не попался на аэропорт прилета
+                    airports.Remove(departuerAirport);
                     // Аэропорт прилета
                     int arrivalAirportId = airports[Faker.RandomNumber.Next(0, airports.Count() - 1)].Id;
+                    // Вернуть обратно в список аэропорт вылета
+                    airports.Add(departuerAirport);
+
                     // Время вылета самолета
                     DateTime departureTime = new DateTime(
                         DateTime.Now.Year,
