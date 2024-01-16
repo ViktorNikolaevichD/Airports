@@ -175,5 +175,22 @@ namespace AirportsAndFlights
             // Обновить данные на сервере
             UpdateServerDb(localDb);
         }
+
+        // Посмотреть предстоящие рейсы на N дней вперед
+        public static List<Flight> ViewFlights(LocalDb localDb, int departureAirport, int arrivalAiport, int daysAhead)
+        {
+            // Последнее время вылета не познее
+            DateTime lastDepartureTime = new DateTime(
+                        DateTime.Now.Year,
+                        DateTime.Now.Month,
+                        DateTime.Now.Day,
+                        23, 59, 59).AddDays(daysAhead);
+
+
+            return localDb.Flights.Where(p => p.Status == "Запланирован" &&
+                                            p.DepartureAirportId == departureAirport &&
+                                            p.ArrivalAirportId == arrivalAiport &&
+                                            p.DepartureTime <= lastDepartureTime).ToList();
+        }
     }
 }
