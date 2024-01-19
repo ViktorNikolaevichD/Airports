@@ -10,8 +10,6 @@ namespace AirportsAndFlights
         {
             MPI.Environment.Run(ref args, comm =>
             {
-                // Локальная база для добавленных объектов
-                AddedDb AddedDb = new AddedDb();
                 // Локальная база
                 LocalDb localDb = new LocalDb();
 
