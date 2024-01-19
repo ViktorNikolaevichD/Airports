@@ -66,11 +66,16 @@ namespace AirportsAndFlights
             string status = "Неопределен";
             if (flightStatus == "Отменен")
             {
-                status = "Отменен";
+                status = flightStatus;
                 return status;
             }
             if (depAirportStatus == "Закрыт" || arrivAirportStatus == "Закрыт")
             {
+                if (flightStatus == "Выполняется")
+                {
+                    status = "Возвращен";
+                    return status;
+                }
                 status = "Отменен";
                 return status;
             }
